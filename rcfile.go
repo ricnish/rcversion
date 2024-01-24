@@ -3,10 +3,13 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
+
+	"github.com/saintfish/chardet"
 )
 
 func replaceVersion(line string, version string) string {
@@ -71,15 +74,41 @@ func changeFileVersion(rcpath string, version string) bool {
 		return false
 	}
 
+	textDetector := chardet.NewTextDetector()
+	buffer := make([]byte, 32<<10)
+	size, _ := io.ReadFull(file, buffer)
+	input := buffer[:size]
+	textEncoding, err := textDetector.DetectBest(input)
+	if err != nil {
+		fmt.Printf("Could not detect encoding from file %s\n", rcpath)
+		return false
+	}
+
+	// TO DO: Deal with UTF-16 files
+	if strings.Contains(textEncoding.Charset, "UTF-16") {
+		fmt.Printf("Skipping UTF-16 file %s\n", rcpath)
+		return false
+	}
+
+	file.Seek(0, 0)
+
 	var lines []string
 	scanner := bufio.NewScanner(file)
 	scanner.Split(bufio.ScanLines)
-
+	hasVersion := false
 	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
+		line := scanner.Text()
+		lines = append(lines, line)
+		if strings.Contains(line, "VALUE \"FileVersion\"") {
+			hasVersion = true
+		}
 	}
 
 	file.Close()
+
+	if !hasVersion {
+		return false
+	}
 
 	tmpfile := strings.Replace(rcpath, ".rc", ".rcbk", 1)
 
@@ -111,6 +140,7 @@ func changeFileVersion(rcpath string, version string) bool {
 		fmt.Printf("Could not rename the new file: %s\n", tmpfile)
 		return false
 	}
+
 	return true
 }
 
