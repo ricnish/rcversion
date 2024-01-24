@@ -31,9 +31,14 @@ func replaceVersion(line string, version string) string {
 }
 
 func readVersion(rcpath string) string {
+	if path.Ext(rcpath) != ".rc" {
+		fmt.Printf("Is not a .rc file %s\n", rcpath)
+		os.Exit(1)
+	}
+
 	file, err := os.Open(rcpath)
 	if err != nil {
-		fmt.Printf("Não foi possivel abrir o arquivo: %s\n", rcpath)
+		fmt.Printf("Could not open the file: %s\n", rcpath)
 		os.Exit(1)
 	}
 
