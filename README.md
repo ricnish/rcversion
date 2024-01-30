@@ -34,7 +34,6 @@ Install the Go programming language and compile the source files.
 ## Notes
 
 TO DO:
-- Read/Write UTF-16LE encoded resource files (my old source files were in ANSI format, sorry)
 - Restrict the version to only accept N.N.N.N format
 
 This project is an example (to me) on how to use the [cobra library](https://github.com/spf13/cobra) and to recursively walk into a directory and filter files.
