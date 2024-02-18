@@ -206,26 +206,41 @@ func changeVersion(rcpath string, version string) int {
 
 	if fileinfo.IsDir() {
 		// If path is a folder, find resource files recursively
+		var rcfiles []string
+
 		err = filepath.Walk(rcpath, func(walkpath string, info os.FileInfo, err error) error {
 			if err != nil {
 				fmt.Printf("Error reading path %s\n", walkpath)
 				return nil
 			}
 
-			if path.Ext(info.Name()) == ".rc" {
-				if changeFileVersion(walkpath, version) {
-					fmt.Println(walkpath)
-					count++
-				}
+			if !info.IsDir() && filepath.Ext(walkpath) == ".rc" {
+				rcfiles = append(rcfiles, walkpath)
 			}
+
 			return nil
 		})
 
 		if err != nil {
 			fmt.Printf("Error walking the path %s", rcpath)
 		}
-		return count
 
+		chRes := make(chan bool)
+		for _, rcfile := range rcfiles {
+			go func(f string, v string) {
+				res := changeFileVersion(f, v)
+				if res {
+					fmt.Println(f)
+				}
+				chRes <- res
+			}(rcfile, version)
+		}
+
+		for i := 0; i < len(rcfiles); i++ {
+			if <-chRes {
+				count++
+			}
+		}
 	} else {
 		// Just change a single file
 		if changeFileVersion(rcpath, version) {

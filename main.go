@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -50,9 +51,10 @@ func cmdChange() *cobra.Command {
 				return
 			}
 
+			start := time.Now()
 			count := changeVersion(srcpath, rcversion)
 			if count > 0 {
-				fmt.Printf("%d Updated file(s)\n", count)
+				fmt.Printf("%d Updated file(s) in %s\n", count, time.Since(start))
 			} else {
 				fmt.Println("No file was updated")
 			}
@@ -76,5 +78,4 @@ func main() {
 	cmdRoot.AddCommand(cmdChange())
 
 	cmdRoot.Execute()
-
 }
